@@ -4,15 +4,16 @@ const pkceChallenge = require('pkce-challenge').default;
 const {FusionAuthClient} = require('@fusionauth/typescript-client');
 const clientId = '7d31ada6-27b4-461e-bf8a-f642aacf5775';
 const clientSecret = 'yz-hU1HZRZzAml2YJdM7-Dtafksq2-lm6sEFxAPS_6g';
-const client = new FusionAuthClient('FKfzkcn2tVitDR97V62zoyVVay5d07icXamrmda8VLCxQYD3E6MaL25Y', 'https://fusionauth.ritza.co');
+const client = new FusionAuthClient('Y808ZszXwPcsXvrFsBzMdmJ7N4Lv85yLkZtJcEnJc1f3GwRO56b2RLns', 'https://fusionauth.ritza.co');
 const consentId = 'e5e81271-847b-467e-b172-770fa806f894';
 
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
+router.get('/', function(req, res, next) {
     let family = [];
     //generate the pkce challenge/verifier dict
     pkce_pair = pkceChallenge();
+    console.log(req.session)
     req.session.verifier = pkce_pair['code_verifier']
     req.session.challenge = pkce_pair['code_challenge']
     if (req.session.user && req.session.user.id) {
@@ -59,6 +60,9 @@ router.get('/', function (req, res, next) {
                             title: 'Family Example',
                             challenge: pkce_pair['code_challenge']
                         });
+                    }).catch((err) => {
+                      console.log("in error");
+                      console.error(JSON.stringify(err))
                     });
                 } else {
                     res.render('index', {family: family, user: req.session.user, title: 'Family Example', challenge: pkce_pair['code_challenge']});
@@ -75,10 +79,7 @@ router.get('/', function (req, res, next) {
 /* OAuth return from FusionAuth */
 router.get('/oauth-redirect', function (req, res, next) {
     // This code stores the user in a server-side session
-    //client.exchangeOAuthCodeForAccessToken(
-    client.exchangeOAuthCodeForAccessTokenUsingPKCE(
-
-    req.query.code,
+    client.exchangeOAuthCodeForAccessTokenUsingPKCE(req.query.code,
         clientId,
         clientSecret,
         'http://localhost:3000/oauth-redirect',
@@ -182,7 +183,7 @@ router.post('/change-consent-status', function (req, res, next) {
         // force signin
         res.redirect(302, '/');
     }
-
+    console.log("req body",req.body)
     const userConsentId = req.body.userConsentId;
     let desiredStatus = req.body.desiredStatus;
     if (desiredStatus != 'Active') {
